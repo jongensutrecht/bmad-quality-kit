@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bmad-quality-kit/invariants.schema.json",
+  "title": "Invariants Document",
+  "description": "Schema for invariants.md parsed content",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Document version"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/category"
+      }
+    }
+  },
+  "$defs": {
+    "category": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": ["Security", "Business", "Performance", "Reliability"]
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/invariant"
+          }
+        }
+      },
+      "required": ["name", "invariants"]
+    },
+    "invariant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^INV-(SEC|BIZ|PERF|REL)-\\d{3}$",
+          "description": "Unique invariant identifier"
+        },
+        "description": {
+          "type": "string",
+          "description": "What must NEVER happen"
+        },
+        "hasTest": {
+          "type": "boolean",
+          "description": "Whether a NEVER-test exists"
+        },
+        "testFile": {
+          "type": "string",
+          "description": "Path to the NEVER-test file"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Why this invariant matters"
+        }
+      },
+      "required": ["id", "description"]
+    }
+  }
+}

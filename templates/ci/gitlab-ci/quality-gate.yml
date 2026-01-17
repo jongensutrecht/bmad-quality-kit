@@ -1,0 +1,123 @@
+# BMAD Quality Gate - GitLab CI Configuration
+# =============================================
+#
+# Dit config valideert:
+# 1. Test requirements (alle verplichte tests aanwezig)
+# 2. Invariant coverage (alle invarianten hebben tests)
+# 3. Standaard tests (pytest, ruff, etc.)
+#
+# Installatie:
+# Kopieer naar .gitlab-ci.yml of include in bestaande config
+
+stages:
+  - validate
+  - lint
+  - test
+  - gate
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - node_modules/
+
+# =========================================
+# LAAG 3: Enforcement Tools
+# =========================================
+
+test-gate:
+  stage: validate
+  image: mcr.microsoft.com/powershell:latest
+  script:
+    - |
+      if (Test-Path "./tools/test-gate/test-gate.ps1") {
+        pwsh ./tools/test-gate/test-gate.ps1 -RepoRoot .
+      } else {
+        Write-Host "test-gate.ps1 not found, skipping..."
+      }
+  allow_failure: false
+
+invariant-check:
+  stage: validate
+  image: mcr.microsoft.com/powershell:latest
+  script:
+    - |
+      if (Test-Path "./tools/invariant-check/invariant-check.ps1") {
+        pwsh ./tools/invariant-check/invariant-check.ps1 -RepoRoot .
+      } else {
+        Write-Host "invariant-check.ps1 not found, skipping..."
+      }
+  allow_failure: false
+
+# =========================================
+# Standard Test Suite
+# =========================================
+
+lint:
+  stage: lint
+  image: python:3.12
+  script:
+    - pip install ruff
+    - ruff check .
+  allow_failure: false
+
+unit-tests:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install -r requirements.txt || true
+    - pip install -r requirements-dev.txt || true
+    - pip install pytest pytest-cov
+    - pytest tests/unit/ -v --cov=src --cov-report=term-missing || pytest -v
+  needs: [lint]
+
+integration-tests:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install -r requirements.txt || true
+    - pip install -r requirements-dev.txt || true
+    - pip install pytest
+    - |
+      if [ -d "tests/integration" ]; then
+        pytest tests/integration/ -v
+      else
+        echo "No integration tests found"
+      fi
+  needs: [unit-tests]
+  allow_failure: true
+
+e2e-tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.40.0-jammy
+  script:
+    - |
+      if [ -f "package.json" ]; then
+        npm ci
+        npx playwright install --with-deps
+      fi
+    - |
+      if [ -d "tests/e2e" ] || [ -d "e2e" ]; then
+        npx playwright test
+      else
+        echo "No e2e tests found"
+      fi
+  needs: [unit-tests]
+  allow_failure: true
+
+# =========================================
+# Final Gate
+# =========================================
+
+quality-gate:
+  stage: gate
+  image: alpine:latest
+  script:
+    - echo "All quality checks passed!"
+  needs:
+    - test-gate
+    - invariant-check
+    - lint
+    - unit-tests

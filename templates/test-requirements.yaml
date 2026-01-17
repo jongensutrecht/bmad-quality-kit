@@ -1,0 +1,178 @@
+# Test Requirements Configuration
+# ================================
+#
+# Dit bestand definieert welke testsoorten verplicht zijn per path pattern.
+# De test-gate tool gebruikt dit om te valideren of alle vereiste tests bestaan.
+#
+# Pas dit bestand aan voor je project specifieke behoeften.
+
+# Versie van dit config formaat
+version: "1.0"
+
+# Test file detectie patterns
+# Hoe herkennen we welk type test een bestand is?
+test_patterns:
+  unit:
+    - "tests/unit/**/*_test.py"
+    - "tests/unit/**/*_test.ts"
+    - "**/*.test.ts"
+    - "**/*.test.js"
+    - "**/*.spec.ts"
+    - "**/*.spec.js"
+    - "**/test_*.py"
+    - "**/*_test.py"
+
+  integration:
+    - "tests/integration/**/*_test.py"
+    - "tests/integration/**/*.test.ts"
+    - "**/*.integration.test.ts"
+    - "**/*.integration.test.js"
+    - "**/integration_test_*.py"
+
+  playwright:
+    - "tests/e2e/**/*.spec.ts"
+    - "tests/e2e/**/*.spec.js"
+    - "e2e/**/*.spec.ts"
+    - "playwright/**/*.spec.ts"
+    - "**/*.e2e.spec.ts"
+
+  e2e:
+    - "tests/e2e/**/*.spec.ts"
+    - "tests/e2e/**/*.spec.js"
+    - "e2e/**/*.spec.ts"
+    - "cypress/**/*.cy.ts"
+    - "cypress/**/*.cy.js"
+
+  contract:
+    - "tests/contract/**/*.test.ts"
+    - "tests/contract/**/*_test.py"
+    - "**/*.contract.test.ts"
+    - "**/*.pact.ts"
+
+# Regels: welke tests zijn verplicht per path pattern?
+rules:
+  # UI componenten: unit tests + Playwright voor visuele verificatie
+  - pattern: "components/**"
+    required: [unit, playwright]
+    rationale: "UI components need unit tests for logic and Playwright for visual verification"
+
+  - pattern: "src/components/**"
+    required: [unit, playwright]
+    rationale: "UI components need unit tests for logic and Playwright for visual verification"
+
+  # Pages: unit + e2e/playwright voor complete flows
+  - pattern: "pages/**"
+    required: [unit, playwright]
+    rationale: "Pages need e2e testing for user flows"
+
+  - pattern: "src/pages/**"
+    required: [unit, playwright]
+    rationale: "Pages need e2e testing for user flows"
+
+  # API routes: unit + integration + contract
+  - pattern: "api/**"
+    required: [unit, integration, contract]
+    rationale: "API endpoints need full testing including contract validation"
+
+  - pattern: "src/api/**"
+    required: [unit, integration, contract]
+    rationale: "API endpoints need full testing including contract validation"
+
+  - pattern: "routes/**"
+    required: [unit, integration]
+    rationale: "Route handlers need integration testing"
+
+  # Backend adapters: integration tests voor externe dependencies
+  - pattern: "adapter/**"
+    required: [unit, integration]
+    rationale: "Adapters interact with external systems"
+
+  - pattern: "adapters/**"
+    required: [unit, integration]
+    rationale: "Adapters interact with external systems"
+
+  # Pure library code: alleen unit tests
+  - pattern: "lib/**"
+    required: [unit]
+    rationale: "Pure library code only needs unit tests"
+
+  - pattern: "src/lib/**"
+    required: [unit]
+    rationale: "Pure library code only needs unit tests"
+
+  - pattern: "utils/**"
+    required: [unit]
+    rationale: "Utility functions only need unit tests"
+
+  - pattern: "src/utils/**"
+    required: [unit]
+    rationale: "Utility functions only need unit tests"
+
+  # Domain/business logic: unit tests
+  - pattern: "domain/**"
+    required: [unit]
+    rationale: "Business logic needs thorough unit testing"
+
+  - pattern: "src/domain/**"
+    required: [unit]
+    rationale: "Business logic needs thorough unit testing"
+
+  - pattern: "services/**"
+    required: [unit, integration]
+    rationale: "Services often orchestrate external calls"
+
+  # Database/ORM: integration tests
+  - pattern: "models/**"
+    required: [unit, integration]
+    rationale: "Database models need integration tests"
+
+  - pattern: "repositories/**"
+    required: [unit, integration]
+    rationale: "Repositories interact with database"
+
+  # Python specific patterns
+  - pattern: "src/**/__init__.py"
+    required: []
+    rationale: "Init files don't need tests"
+
+  - pattern: "**/conftest.py"
+    required: []
+    rationale: "Test fixtures don't need tests"
+
+# Exclusies: paths die geen tests nodig hebben
+exclusions:
+  - "**/__pycache__/**"
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/*.d.ts"
+  - "**/types/**"
+  - "**/migrations/**"
+  - "**/fixtures/**"
+  - "**/.venv/**"
+  - "**/venv/**"
+
+# Minimum coverage thresholds (optioneel)
+coverage:
+  unit:
+    minimum: 80
+    fail_under: true
+  integration:
+    minimum: 60
+    fail_under: false
+  e2e:
+    minimum: 0
+    fail_under: false
+
+# Test naming conventions
+# Hoe moet een test file heten gegeven het source bestand?
+naming_conventions:
+  # source: components/Button.tsx -> test: components/Button.test.tsx
+  typescript:
+    source_pattern: "*.tsx"
+    test_pattern: "*.test.tsx"
+
+  python:
+    source_pattern: "*.py"
+    test_pattern: "test_*.py"

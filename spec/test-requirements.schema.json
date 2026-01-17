@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bmad-quality-kit/test-requirements.schema.json",
+  "title": "Test Requirements Configuration",
+  "description": "Schema for test-requirements.yaml",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Configuration version",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "test_patterns": {
+      "type": "object",
+      "description": "Patterns to identify test files by type",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "propertyNames": {
+        "enum": ["unit", "integration", "playwright", "e2e", "contract"]
+      }
+    },
+    "rules": {
+      "type": "array",
+      "description": "Rules mapping source patterns to required test types",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Glob pattern for source files"
+          },
+          "required": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["unit", "integration", "playwright", "e2e", "contract"]
+            },
+            "description": "Required test types for matching files"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Explanation for why these tests are required"
+          }
+        },
+        "required": ["pattern", "required"]
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "description": "Patterns for files that don't need tests",
+      "items": {
+        "type": "string"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Coverage thresholds per test type",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "minimum": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "fail_under": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "naming_conventions": {
+      "type": "object",
+      "description": "Test file naming conventions",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "source_pattern": {
+            "type": "string"
+          },
+          "test_pattern": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": ["rules"]
+}
